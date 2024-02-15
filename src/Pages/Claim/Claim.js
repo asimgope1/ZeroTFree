@@ -1,27 +1,23 @@
+import React, {useEffect, useState} from 'react';
 import {
   View,
   Text,
   Platform,
-  TouchableOpacity,
   KeyboardAvoidingView,
   ScrollView,
   SafeAreaView,
   Image,
 } from 'react-native';
-import React from 'react';
 import Geolocation from 'react-native-geolocation-service';
-import {useEffect} from 'react';
 import {check, PERMISSIONS, RESULTS, request} from 'react-native-permissions';
-import {useState} from 'react';
-import {BLACK, BRAND, GRAY, WHITE} from '../../constants/color';
+import {BLACK, BRAND, WHITE} from '../../constants/color';
 import {RFValue} from 'react-native-responsive-fontsize';
 import CustomButton from '../../components/CustomButton';
 import {HEIGHT, MyStatusBar} from '../../constants/config';
-import {Fragment} from 'react';
 import {appStyles} from '../../styles/AppStyles';
 import {Loader} from './../../components/Loader';
 import {loginStyles} from '../Login/LoginStyles';
-import {EXTRABOLD, REGULAR} from '../../constants/fontfamily';
+import {REGULAR} from '../../constants/fontfamily';
 import {claimStyles} from './ClaimStyles';
 import {CLAIM} from '../../constants/imagepath';
 import Header from '../../components/Header';
@@ -34,9 +30,8 @@ import {clearAll} from '../../utils/Storage';
 const Claim = ({navigation}) => {
   const [permissionStatus, setPermissionStatus] = useState(false);
   const [loader, setLoader] = useState(false);
-  const [coordinates, setCoordinates] = useState({latitude: '', longitude: ''});
   const [claimID, setClaimID] = useState('');
-  const [userDetails, setUserDetails] = useState({
+  let userDetails = {
     ipaddress: '',
     latitude: '',
     longitude: '',
@@ -46,92 +41,22 @@ const Claim = ({navigation}) => {
     frequency: '',
     carrier: '',
     defaultGateway: '',
-  });
+  };
 
   useEffect(() => {
     getLocationPermission();
   }, []);
 
   const getLocationPermission = async () => {
-    console.log('first');
     await request(
       Platform.OS === 'ios'
         ? PERMISSIONS.IOS.ACCESS_FINE_LOCATION
         : PERMISSIONS.ANDROID.ACCESS_FINE_LOCATION,
     ).then(result => {
-      console.log(result);
-      if (result == 'granted') {
+      if (result === 'granted') {
         setPermissionStatus(true);
       }
     });
-  };
-
-  const checkLocationPermission = () => {
-    if (Platform.OS == 'android') {
-      check(PERMISSIONS.ANDROID.ACCESS_FINE_LOCATION)
-        .then(result => {
-          switch (result) {
-            case RESULTS.UNAVAILABLE:
-              console.log(
-                'This feature is not available (on this device / in this context)',
-              );
-              break;
-            case RESULTS.DENIED:
-              console.log(
-                'The permission has not been requested / is denied but requestable',
-              );
-              break;
-            case RESULTS.LIMITED:
-              console.log(
-                'The permission is limited: some actions are possible',
-              );
-              break;
-            case RESULTS.GRANTED:
-              console.log('The permission is granted');
-              break;
-            case RESULTS.BLOCKED:
-              console.log(
-                'The permission is denied and not requestable anymore',
-              );
-              break;
-          }
-        })
-        .catch(error => {
-          console.log('ERROR: ', error);
-        });
-    } else {
-      check(PERMISSIONS.IOS.LOCATION_ALWAYS)
-        .then(result => {
-          switch (result) {
-            case RESULTS.UNAVAILABLE:
-              console.log(
-                'This feature is not available (on this device / in this context)',
-              );
-              break;
-            case RESULTS.DENIED:
-              console.log(
-                'The permission has not been requested / is denied but requestable',
-              );
-              break;
-            case RESULTS.LIMITED:
-              console.log(
-                'The permission is limited: some actions are possible',
-              );
-              break;
-            case RESULTS.GRANTED:
-              console.log('The permission is granted');
-              break;
-            case RESULTS.BLOCKED:
-              console.log(
-                'The permission is denied and not requestable anymore',
-              );
-              break;
-          }
-        })
-        .catch(error => {
-          console.log('ERROR: ', error);
-        });
-    }
   };
 
   const getGeolocationDetails = async () => {
@@ -140,19 +65,83 @@ const Claim = ({navigation}) => {
       Geolocation.getCurrentPosition(
         position => {
           const {latitude, longitude, altitude} = position.coords;
-          setUserDetails({
+          userDetails = {
             ...userDetails,
-            latitude: latitude,
-            longitude: longitude,
-            altitude: altitude,
-          });
+            latitude: latitude.toString(),
+            longitude: longitude.toString(),
+            altitude: altitude.toString(),
+          };
           setLoader(false);
+          fetchNetworkDetails();
         },
         error => {
           console.log(error.code, error.message);
         },
         {enableHighAccuracy: true, timeout: 15000, maximumAge: 10000},
       );
+    }
+  };
+
+  const fetchNetworkDetails = async () => {
+    try {
+      setLoader(true);
+      const defaultGateway = await NetworkInfo.getGatewayIPAddress();
+      const state = await NetInfo.fetch();
+
+      userDetails = {
+        ...userDetails,
+        ssid: state?.details?.ssid,
+        bssid: state?.details?.bssid,
+        frequency: state?.details?.frequency,
+        ipaddress: state?.details?.ipAddress,
+        defaultGateway: defaultGateway,
+      };
+      getClaimId();
+    } catch (error) {
+      console.error('Error fetching network details:', error);
+    }
+  };
+
+  const getClaimId = async () => {
+    try {
+      const url = `${BASE_URL}get_code/`;
+      const res = await GETNETWORK(url);
+
+      if (res.code === 200) {
+        setClaimID(res?.data?.alphanumeric_code);
+        postUserDetails();
+      } else {
+        alert(res?.msg);
+      }
+    } catch (error) {
+      console.error('Error getting claim ID:', error);
+    } finally {
+      setLoader(false);
+    }
+  };
+
+  const postUserDetails = async () => {
+    console.log('User Details:', userDetails);
+    const url = `${BASE_URL}user-data/`;
+    const obj = {
+      ztf_id: claimID,
+      ...userDetails,
+    };
+
+    try {
+      setLoader(true);
+      const res = await POSTNETWORK(url, obj, true);
+
+      if (res.code === 201) {
+        console.log('SUCCESS');
+      } else {
+        // Handle error case
+        console.log('Error:', res.msg);
+      }
+    } catch (error) {
+      console.error('Error:', error);
+    } finally {
+      setLoader(false);
     }
   };
 
@@ -166,87 +155,19 @@ const Claim = ({navigation}) => {
     });
   };
 
-  const postUserDetails = () => {
-    console.log('first');
-    const url = `${BASE_URL}user-data/`;
-    const obj = {
-      ztf_id: claimID,
-      ...userDetails,
-    };
-
-    setLoader(true);
-    console.log(obj);
-    POSTNETWORK(url, obj, true)
-      .then(res => {
-        console.log('result------------------------->', res);
-        if (res.code === 201) {
-          console.log('SUCCESS');
-        } else {
-          // alert(res?.msg);
-        }
-      })
-      .catch(err => {
-        // alert('Something went wrong!');
-      })
-      .finally(() => {
-        setLoader(false);
-      });
-  };
-
-  const getClaimId = () => {
-    // console.log(userDetails);
-    const url = `${BASE_URL}get_code/`;
-    setLoader(true);
-    GETNETWORK(url)
-      .then(res => {
-        console.log('result', res);
-        if (res.code === 200) {
-          setClaimID(res?.data?.alphanumeric_code);
-          postUserDetails();
-        } else {
-          alert(res?.msg);
-        }
-      })
-      .catch(err => {
-        alert('Something went wrong!');
-      })
-      .finally(() => {
-        setLoader(false);
-      });
-  };
-
   const getInformation = async () => {
-    await getGeolocationDetails().then(async () => {
-      await NetworkInfo.getGatewayIPAddress()
-        .then(async defaultGateway => {
-          setUserDetails({
-            ...userDetails,
-            // defaultGateway: defaultGateway,
-          });
-        })
-        .then(async () => {
-          await NetInfo.fetch().then(async state => {
-            setUserDetails({
-              ...userDetails,
-              ssid: state?.details?.ssid,
-              bssid: state?.details?.bssid,
-              frequency: state?.details?.frequency,
-              ipaddress: state?.details?.ipAddress,
-              // carrier: state?.details?.carrier,
-            });
-          });
-        })
-        .then(async () => {
-          console.log(userDetails);
-          getClaimId(userDetails);
-        });
-    });
-
-    // getClaimId();
+    try {
+      setLoader(true);
+      await getGeolocationDetails();
+    } catch (error) {
+      console.error('Error fetching information:', error);
+    } finally {
+      setLoader(false);
+    }
   };
 
   return (
-    <Fragment>
+    <>
       <MyStatusBar backgroundColor={WHITE} barStyle={'dark-content'} />
       <SafeAreaView style={appStyles.safeareacontainer}>
         <Loader visible={loader} />
@@ -317,41 +238,8 @@ const Claim = ({navigation}) => {
           </ScrollView>
         </KeyboardAvoidingView>
       </SafeAreaView>
-    </Fragment>
+    </>
   );
 };
 
 export default Claim;
-
-/*
-
-
-<CustomButton
-        onPress={() => {
-          getGeolocationDetails();
-        }}
-        title={'Extract Geo-coordinates'}
-        width={'85%'}
-      />
-{coordinates.latitude && (
-        <View
-          style={{
-            marginTop: HEIGHT * 0.02,
-          }}>
-          <Text
-            style={{
-              color: BLACK,
-              fontSize: RFValue(15),
-            }}>
-            Latitude: {coordinates.latitude}
-          </Text>
-          <Text
-            style={{
-              color: BLACK,
-              fontSize: RFValue(15),
-            }}>
-            Longitude: {coordinates.longitude}
-          </Text>
-        </View>
-      )}
-*/
