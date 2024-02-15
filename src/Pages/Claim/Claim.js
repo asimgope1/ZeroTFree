@@ -174,23 +174,23 @@ const Claim = ({navigation}) => {
       ...userDetails,
     };
 
-    // setLoader(true);
-    // console.log(obj);
-    // POSTNETWORK(url, obj)
-    //   .then(res => {
-    //     console.log('result------------------------->', res);
-    //     if (res.code === 201) {
-    //       console.log('SUCCESS');
-    //     } else {
-    //       // alert(res?.msg);
-    //     }
-    //   })
-    //   .catch(err => {
-    //     // alert('Something went wrong!');
-    //   })
-    //   .finally(() => {
-    //     setLoader(false);
-    //   });
+    setLoader(true);
+    console.log(obj);
+    POSTNETWORK(url, obj, true)
+      .then(res => {
+        console.log('result------------------------->', res);
+        if (res.code === 201) {
+          console.log('SUCCESS');
+        } else {
+          // alert(res?.msg);
+        }
+      })
+      .catch(err => {
+        // alert('Something went wrong!');
+      })
+      .finally(() => {
+        setLoader(false);
+      });
   };
 
   const getClaimId = () => {

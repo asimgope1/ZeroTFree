@@ -11,7 +11,7 @@ export const POSTNETWORK = async (
   };
   if (token) {
     let loginRes = await getObjByKey('loginResponse');
-    headers = {...headers, Authorization: `Bearer ${loginRes.access_token}`};
+    headers = {...headers, Authorization: `Token ${loginRes?.data?.token}`};
   }
   console.log('HEADERS: ', headers);
   return await fetch(url, {

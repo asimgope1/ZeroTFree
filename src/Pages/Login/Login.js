@@ -45,7 +45,7 @@ const Login = ({navigation}) => {
         console.log('result', res);
         if (res.code === 200) {
           // async-storage-processing
-          storeObjByKey('loginResponse', obj).then(() =>
+          storeObjByKey('loginResponse', res).then(() =>
             navigation.navigate('Terms'),
           );
         } else {
