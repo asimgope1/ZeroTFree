@@ -25,11 +25,29 @@ import {EXTRABOLD, REGULAR} from '../../constants/fontfamily';
 import {claimStyles} from './ClaimStyles';
 import {CLAIM} from '../../constants/imagepath';
 import Header from '../../components/Header';
+import {BASE_URL} from '../../constants/url';
+import {GETNETWORK, POSTNETWORK} from '../../utils/Network';
+import NetInfo from '@react-native-community/netinfo';
+import {NetworkInfo} from 'react-native-network-info';
+import {clearAll} from '../../utils/Storage';
 
 const Claim = ({navigation}) => {
   const [permissionStatus, setPermissionStatus] = useState(false);
   const [loader, setLoader] = useState(false);
   const [coordinates, setCoordinates] = useState({latitude: '', longitude: ''});
+  const [claimID, setClaimID] = useState('');
+  const [userDetails, setUserDetails] = useState({
+    ipaddress: '',
+    latitude: '',
+    longitude: '',
+    altitude: '',
+    ssid: '',
+    bssid: '',
+    frequency: '',
+    carrier: '',
+    defaultGateway: '',
+  });
+
   useEffect(() => {
     getLocationPermission();
   }, []);
@@ -121,11 +139,13 @@ const Claim = ({navigation}) => {
     if (permissionStatus) {
       Geolocation.getCurrentPosition(
         position => {
-          console.log(position);
-          const {latitude, longitude} = position.coords;
-          console.log('Latitude: ', latitude);
-          console.log('Longitide: ', longitude);
-          setCoordinates({latitude: latitude, longitude: longitude});
+          const {latitude, longitude, altitude} = position.coords;
+          setUserDetails({
+            ...userDetails,
+            latitude: latitude,
+            longitude: longitude,
+            altitude: altitude,
+          });
           setLoader(false);
         },
         error => {
@@ -138,10 +158,91 @@ const Claim = ({navigation}) => {
 
   const skipCallback = () => {
     setLoader(true);
-    setTimeout(() => {
-      navigation.navigate('Login');
-      setLoader(false);
-    }, 1000);
+    clearAll().then(() => {
+      setTimeout(() => {
+        navigation.navigate('Login');
+        setLoader(false);
+      }, 1000);
+    });
+  };
+
+  const postUserDetails = () => {
+    console.log('first');
+    const url = `${BASE_URL}user-data/`;
+    const obj = {
+      ztf_id: claimID,
+      ...userDetails,
+    };
+
+    // setLoader(true);
+    // console.log(obj);
+    // POSTNETWORK(url, obj)
+    //   .then(res => {
+    //     console.log('result------------------------->', res);
+    //     if (res.code === 201) {
+    //       console.log('SUCCESS');
+    //     } else {
+    //       // alert(res?.msg);
+    //     }
+    //   })
+    //   .catch(err => {
+    //     // alert('Something went wrong!');
+    //   })
+    //   .finally(() => {
+    //     setLoader(false);
+    //   });
+  };
+
+  const getClaimId = () => {
+    // console.log(userDetails);
+    const url = `${BASE_URL}get_code/`;
+    setLoader(true);
+    GETNETWORK(url)
+      .then(res => {
+        console.log('result', res);
+        if (res.code === 200) {
+          setClaimID(res?.data?.alphanumeric_code);
+          postUserDetails();
+        } else {
+          alert(res?.msg);
+        }
+      })
+      .catch(err => {
+        alert('Something went wrong!');
+      })
+      .finally(() => {
+        setLoader(false);
+      });
+  };
+
+  const getInformation = async () => {
+    await getGeolocationDetails().then(async () => {
+      await NetworkInfo.getGatewayIPAddress()
+        .then(async defaultGateway => {
+          setUserDetails({
+            ...userDetails,
+            // defaultGateway: defaultGateway,
+          });
+        })
+        .then(async () => {
+          await NetInfo.fetch().then(async state => {
+            setUserDetails({
+              ...userDetails,
+              ssid: state?.details?.ssid,
+              bssid: state?.details?.bssid,
+              frequency: state?.details?.frequency,
+              ipaddress: state?.details?.ipAddress,
+              // carrier: state?.details?.carrier,
+            });
+          });
+        })
+        .then(async () => {
+          console.log(userDetails);
+          getClaimId(userDetails);
+        });
+    });
+
+    // getClaimId();
   };
 
   return (
@@ -185,7 +286,9 @@ const Claim = ({navigation}) => {
                     fontFamily: REGULAR,
                     fontSize: RFValue(14),
                     marginBottom: HEIGHT * 0.02,
-                  }}></Text>
+                  }}>
+                  Claim your ID !
+                </Text>
               </View>
               <View style={claimStyles.imageContainer}>
                 <Image
@@ -195,14 +298,16 @@ const Claim = ({navigation}) => {
                 />
               </View>
             </View>
-            <View style={claimStyles.claimIdContainer}>
-              <Text style={claimStyles.titleText}>your ID is</Text>
-              <Text style={claimStyles.idText}>#34232523523</Text>
-            </View>
+            {claimID && (
+              <View style={claimStyles.claimIdContainer}>
+                <Text style={claimStyles.titleText}>your ID is</Text>
+                <Text style={claimStyles.idText}>#{claimID}</Text>
+              </View>
+            )}
             <View style={{height: HEIGHT * 0.05}} />
             <CustomButton
               onPress={() => {
-                console.log('ashutosh');
+                getInformation();
               }}
               title={'Claim ID'}
               borderColor={BRAND}

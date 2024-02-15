@@ -12,7 +12,7 @@ import {
   Alert,
   BackHandler,
 } from 'react-native';
-import {HEIGHT, MyStatusBar} from '../../constants/config';
+import {HEIGHT, MyStatusBar, WIDTH} from '../../constants/config';
 import {BRAND, WHITE} from '../../constants/color';
 import CustomButton from '../../components/CustomButton';
 import {CustomTextInput} from '../../components/CustomTextInput';
@@ -24,6 +24,9 @@ import Header from '../../components/Header';
 import {loginStyles} from '../Login/LoginStyles';
 import {EXTRABOLD, REGULAR} from '../../constants/fontfamily';
 import {RFValue} from 'react-native-responsive-fontsize';
+import {POSTNETWORK} from '../../utils/Network';
+import {BASE_URL} from '../../constants/url';
+import {storeObjByKey} from '../../utils/Storage';
 
 const SignUp = ({navigation}) => {
   const [name, setName] = useState('');
@@ -31,9 +34,34 @@ const SignUp = ({navigation}) => {
   const [password, setPassword] = useState('');
   const [loader, setLoader] = useState('');
 
-  const handleSignUp = () => {
-    // Your sign up logic here
-    console.log('Signing up with:', name, email, password);
+  const handleSignup = () => {
+    const url = `${BASE_URL}register/`;
+    const obj = {
+      username: name,
+      email: email,
+      password: password,
+    };
+    setLoader(true);
+    console.log(obj);
+    POSTNETWORK(url, obj)
+      .then(res => {
+        console.log('result', res);
+        if (res.code === 201) {
+          // async-storage-processing
+          storeObjByKey('loginResponse', obj).then(() => {
+            navigation.navigate('Login');
+            alert('Registered successfully, Please login!');
+          });
+        } else {
+          alert(res?.msg);
+        }
+      })
+      .catch(err => {
+        alert('Something went wrong!');
+      })
+      .finally(() => {
+        setLoader(false);
+      });
   };
 
   return (
@@ -131,7 +159,19 @@ const SignUp = ({navigation}) => {
               </View>
             </View>
             <CustomButton
-              onPress={() => navigation.navigate('Login')}
+              onPress={() => {
+                if (name == '' && email == '' && password == '') {
+                  alert('Please fill all the details to create account!');
+                } else if (name == '') {
+                  alert('Please enter your name');
+                } else if (email == '') {
+                  alert('Please enter your email');
+                } else if (password == '') {
+                  alert('Please enter your password');
+                } else {
+                  handleSignup();
+                }
+              }}
               title={'Create Account'}
               width={'81%'}
               borderColor={BRAND}
@@ -145,10 +185,10 @@ const SignUp = ({navigation}) => {
                 style={{
                   color: '#787878',
                   fontFamily: EXTRABOLD,
-                  fontSize: RFValue(15),
+                  fontSize: RFValue(14),
                   fontWeight: 'bold',
                 }}>
-                Already have an account?{' '}
+                Already have an account?
                 <Text
                   onPress={() => {
                     navigation.navigate('Login');
@@ -156,7 +196,7 @@ const SignUp = ({navigation}) => {
                   style={{
                     color: BRAND,
                   }}>
-                  Log in
+                  {' Log in'}
                 </Text>
               </Text>
             </View>

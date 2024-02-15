@@ -23,11 +23,42 @@ import {appStyles} from '../../styles/AppStyles';
 import {EXTRABOLD, REGULAR} from '../../constants/fontfamily';
 import {RFValue} from 'react-native-responsive-fontsize';
 import {useFocusEffect} from '@react-navigation/native';
+import {BASE_URL} from '../../constants/url';
+import {POSTNETWORK} from '../../utils/Network';
+import {storeObjByKey} from '../../utils/Storage';
 
 const Login = ({navigation}) => {
   const [loader, setLoader] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+
+  const handleLogin = () => {
+    const url = `${BASE_URL}login/`;
+    const obj = {
+      email: email,
+      password: password,
+    };
+    setLoader(true);
+    console.log(obj);
+    POSTNETWORK(url, obj)
+      .then(res => {
+        console.log('result', res);
+        if (res.code === 200) {
+          // async-storage-processing
+          storeObjByKey('loginResponse', obj).then(() =>
+            navigation.navigate('Terms'),
+          );
+        } else {
+          alert(res?.msg);
+        }
+      })
+      .catch(err => {
+        alert('Something went wrong!');
+      })
+      .finally(() => {
+        setLoader(false);
+      });
+  };
 
   useFocusEffect(() => {
     const backAction = () => {
@@ -128,7 +159,17 @@ const Login = ({navigation}) => {
               </View>
             </View>
             <CustomButton
-              onPress={() => navigation.navigate('Terms')}
+              onPress={() => {
+                if (email == '' && password == '') {
+                  alert('Please enter your email & password to login!');
+                } else if (email == '') {
+                  alert('Please enter your email');
+                } else if (password == '') {
+                  alert('Please enter your password');
+                } else {
+                  handleLogin();
+                }
+              }}
               borderColor={BRAND}
               title={'Login'}
               width={'81%'}
