@@ -20,10 +20,13 @@ import {BOLD, MEDIUM} from '../../constants/fontfamily';
 import {RFValue} from 'react-native-responsive-fontsize';
 import CustomButton from '../../components/CustomButton';
 import {CHECKMARK, CROSS, LOGO, TICK} from '../../constants/imagepath';
+import Alertmodal from '../../components/Alertmodal/Alertmodal';
 
 const Terms = ({navigation}) => {
   const [loader, setLoader] = useState(false);
   const [isChecked, setIsChecked] = useState(false);
+  const [alertMsg, setAlertMsg] = useState('');
+  const [alertModal, setAlertModal] = useState(false);
   const handleAccept = () => {
     // Handle accept logic
     console.log('User accepted terms');
@@ -40,6 +43,11 @@ const Terms = ({navigation}) => {
       <MyStatusBar backgroundColor={WHITE} barStyle={'dark-content'} />
       <SafeAreaView style={appStyles.safeareacontainer}>
         <Loader visible={loader} />
+        <Alertmodal
+          title={alertMsg}
+          visible={alertModal}
+          onBackpress={setAlertModal}
+        />
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           style={{flex: 1}}>
@@ -82,64 +90,142 @@ const Terms = ({navigation}) => {
                 </Text>
               </View>
               <View style={{width: '90%'}}>
-                <Text style={styles.heading}>Introduction</Text>
+                <Text style={styles.heading}>1. Introduction</Text>
                 <Text style={styles.paragraph}>
-                  These terms and conditions ("Terms") govern your use of the
-                  ZeroTFree mobile application. By downloading, accessing, or
-                  using the App, you agree to be bound by these Terms. If you do
-                  not agree to these Terms, please do not use the App.
+                  Welcome to ZeroTfree! These Terms of Service ("Terms") govern
+                  your access and use of our mobile application ("ZeroTfree
+                  App"). By accessing or using the App, you agree to be bound by
+                  these Terms.
                 </Text>
-                <Text style={styles.heading}>Information Collection</Text>
-                <Text style={styles.paragraph}>
-                  The App may collect certain information from your device,
-                  including but not limited to IP address, location data,
-                  International Mobile Equipment Identity (IMEI), Service Set
-                  Identifier (SSID), and Basic Service Set Identifier (BSSID).
-                  This information is collected solely for the purpose of
-                  providing you with the services offered by the App.
+                <Text style={styles.heading}>2. Data Collection and Use</Text>
+                <Text style={{...styles.heading, fontSize: RFValue(16)}}>
+                  A. Location Data:
                 </Text>
-                <Text style={styles.heading}>Use of Information</Text>
                 <Text style={styles.paragraph}>
-                  We may use the collected information to: Provide and maintain
-                  the functionality of the App. Improve and optimize the
-                  performance of the App. Customize your experience with the
-                  App. Analyze usage patterns and trends to enhance our
-                  services.
+                  ● We collect your location data.
                 </Text>
-                <Text style={styles.heading}>Privacy</Text>
                 <Text style={styles.paragraph}>
-                  We may use the collected information to: Provide and maintain
-                  the functionality of the App. Improve and optimize the
-                  performance of the App. Customize your experience with the
-                  App. Analyze usage patterns and trends to enhance our
-                  services.
+                  ● We use your location data.
                 </Text>
-                <Text style={styles.heading}>Security</Text>
                 <Text style={styles.paragraph}>
-                  We employ industry-standard security measures to protect your
-                  information from unauthorized access, disclosure, alteration,
-                  or destruction. However, no method of transmission over the
-                  internet or electronic storage is 100% secure, and we cannot
-                  guarantee absolute security.
+                  ● You can control or disable location tracking in the App
+                  settings.
                 </Text>
-                <Text style={styles.heading}>User Responsibilities</Text>
                 <Text style={styles.paragraph}>
-                  You are responsible for maintaining the confidentiality of any
-                  account credentials associated with the App and for all
-                  activities that occur under your account. You agree to notify
-                  us immediately of any unauthorized use of your account or any
-                  other breach of security.
+                  ● We collect your location data to be sure that you are not
+                  from these countries : Afghanistan, Balkans, Belarus
+                  Sanctions, Burma, Central African, Chinese Military, Cuba
+                  Sanctions, Ethiopia, Hong Kong, Iran, Iraq, Lebanon, Libya,
+                  Mali, Nicaragua, North Korea, Russian, Somalia, South Sudan,
+                  Sudan and Darfur, Syria, Ukraine-/Russia, Venezuela, Yemen,
+                  Zimbabwe.
                 </Text>
-                <Text style={styles.heading}>Updates to Terms</Text>
-                <Text style={styles.paragraph}>
-                  We reserve the right to update or modify these Terms at any
-                  time without prior notice. By continuing to use the App after
-                  any such changes, you agree to be bound by the revised Terms.
+                <Text style={{...styles.heading, fontSize: RFValue(16)}}>
+                  B. IP Address:
                 </Text>
-                <Text style={styles.heading}>Contact Us</Text>
                 <Text style={styles.paragraph}>
-                  If you have any questions or concerns about these Terms or the
-                  App, please contact us at ZeroTFree official mail.
+                  ● We collect your IP address automatically.
+                </Text>
+                <Text style={styles.paragraph}>
+                  ● We use your IP address for security purposes and analytics.
+                </Text>
+                <Text style={styles.paragraph}>
+                  ● Your IP address may be linked to other user data.
+                </Text>
+                <Text style={styles.heading}>3. Data Security and Privacy</Text>
+                <Text style={styles.paragraph}>
+                  ● We take the protection of your data very seriously and
+                  employ a multi-layered approach to ensure its security.
+                </Text>
+                <Text style={styles.paragraph}>
+                  ● We retain your data for or until you delete it.
+                </Text>
+                <Text style={styles.paragraph}>
+                  ● We may share your data with third-party service providers.
+                </Text>
+                <Text style={styles.paragraph}>
+                  ● You can access, correct, or delete your data.
+                </Text>
+                <Text style={styles.heading}>4. Third-Party Services</Text>
+                <Text style={styles.paragraph}>
+                  ● We use third-party services.
+                </Text>
+                <Text style={styles.paragraph}>
+                  ● We use third-party services that may collect [list specific
+                  types of data, e.g., device identifiers, usage data, location
+                  information]. Please note that their data collection and
+                  privacy practices are governed by their own policies, which
+                  you can access by clicking the links provided.
+                </Text>
+                <Text style={styles.heading}>5. Disclaimer and Warranties</Text>
+                <Text style={styles.paragraph}>
+                  ● We provide the App "as is" without warranties.
+                </Text>
+                <Text style={styles.paragraph}>
+                  ● While we strive to create a safe and secure App, we cannot
+                  guarantee that your use will be entirely free of risks or
+                  errors. You acknowledge and agree that you use the App at your
+                  own risk and that we are not liable for any direct, indirect,
+                  incidental, consequential, or punitive damages arising from
+                  your use of the App. This includes, but is not limited to,
+                  damages for lost profits, data loss, personal injury, or
+                  property damage.
+                </Text>
+                <Text style={styles.heading}>6. Intellectual Property</Text>
+                <Text style={styles.paragraph}>
+                  ● We own all intellectual property rights, including
+                  copyrights, trademarks, patents, and trade secrets, associated
+                  with the App and its content. This includes the App itself,
+                  its design, code, graphics, user interface, and all other
+                  materials within the App.
+                </Text>
+                <Text style={styles.paragraph}>
+                  ● You may only use the App for its intended purpose, which is
+                  to [clearly describe the app's core functionality and approved
+                  uses]. Any other use of the App, including but not limited to
+                  [list examples of prohibited activities], is strictly
+                  prohibited..
+                </Text>
+                <Text style={styles.heading}>7. Termination</Text>
+                <Text style={styles.paragraph}>
+                  ● Respecting these Terms is essential for maintaining a safe
+                  and enjoyable environment for all users. We take violations
+                  seriously and may terminate your account without prior notice
+                  if your actions negatively impact the community or violate the
+                  core principles of the App. We encourage you to familiarize
+                  yourself thoroughly with these Terms and contact us if you
+                  have any questions.
+                </Text>
+                <Text style={styles.heading}>
+                  8. Governing Law and Dispute Resolution
+                </Text>
+                <Text style={styles.paragraph}>
+                  ● These Terms are governed by the laws of France.
+                </Text>
+                <Text style={styles.paragraph}>
+                  ● Any disputes will be resolved.
+                </Text>
+                <Text style={styles.heading}>
+                  9. Updates to Terms of Service
+                </Text>
+                <Text style={styles.paragraph}>
+                  ● These Terms are governed by the laws of France.
+                </Text>
+                <Text style={styles.paragraph}>
+                  ● We reserve the right to modify these Terms at any time, as
+                  needed to comply with applicable laws and regulations,
+                  introduce new features or functionalities, or improve the user
+                  experience. We will endeavor to notify you of any significant
+                  changes through in-app notifications, emails, or website
+                  updates. It is your responsibility to periodically review
+                  these Terms to stay informed of any changes. Your continued
+                  use of the App following the posting of updated Terms
+                  constitutes your acceptance of the changes.
+                </Text>
+                <Text style={styles.heading}>10. Contact Information</Text>
+                <Text style={styles.paragraph}>
+                  ● You can contact us at{' '}
+                  <Text style={{color: BRAND}}>deploy310@gmail.com</Text>
                 </Text>
               </View>
             </View>
@@ -197,7 +283,9 @@ const Terms = ({navigation}) => {
                   if (isChecked) {
                     navigation.navigate('Claim');
                   } else {
-                    Alert.alert('Please accept by clicking checkbox !');
+                    // Alert.alert('Please accept by clicking checkbox !');
+                    setAlertMsg('Please accept by clicking checkbox !');
+                    setAlertModal(true);
                   }
                 }}
                 icon={TICK}

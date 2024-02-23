@@ -54,15 +54,16 @@ export const loginStyles = StyleSheet.create({
   },
   imageContainer: {
     width: WIDTH * 0.5,
-    height: WIDTH * 0.2,
+    height: WIDTH * 0.3,
     alignSelf: 'center',
     justifyContent: 'center',
     alignItems: 'center',
+    // backgroundColor: 'red',
   },
   image: {
     width: '100%',
-    height: '90%',
-    tintColor: BRAND,
+    height: '100%',
+    // tintColor: BRAND,
   },
   credentialView: {
     width: '100%',

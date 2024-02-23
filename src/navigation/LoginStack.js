@@ -5,6 +5,7 @@ import Login from '../Pages/Login/Login';
 import Claim from '../Pages/Claim';
 import Signup from '../Pages/Signup/Signup';
 import Terms from './../Pages/Terms/Terms';
+import Admin from '../Pages/Admin/Admin';
 
 const Stack = createNativeStackNavigator();
 export default LoginStack = () => {
@@ -34,6 +35,11 @@ export default LoginStack = () => {
         options={{headerShown: false}}
         name="Terms"
         component={Terms}
+      />
+      <Stack.Screen
+        options={{headerShown: false}}
+        name="Admin"
+        component={Admin}
       />
     </Stack.Navigator>
   );

@@ -17,7 +17,7 @@ import {BRAND, WHITE} from '../../constants/color';
 import CustomButton from '../../components/CustomButton';
 import {CustomTextInput} from '../../components/CustomTextInput';
 import signupStyles from './SignupStyles'; // Import signupStyles from SignUpsignupStyles
-import {LOGO} from '../../constants/imagepath';
+import {LOGO, ZZWHITE} from '../../constants/imagepath';
 import {appStyles} from '../../styles/AppStyles';
 import {Loader} from '../../components/Loader';
 import Header from '../../components/Header';
@@ -27,12 +27,15 @@ import {RFValue} from 'react-native-responsive-fontsize';
 import {POSTNETWORK} from '../../utils/Network';
 import {BASE_URL} from '../../constants/url';
 import {storeObjByKey} from '../../utils/Storage';
+import Alertmodal from '../../components/Alertmodal/Alertmodal';
 
 const SignUp = ({navigation}) => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loader, setLoader] = useState('');
+  const [alertMsg, setAlertMsg] = useState('');
+  const [alertModal, setAlertModal] = useState(false);
 
   const handleSignup = () => {
     const url = `${BASE_URL}register/`;
@@ -49,15 +52,19 @@ const SignUp = ({navigation}) => {
         if (res.code === 201) {
           // async-storage-processing
           storeObjByKey('loginResponse', obj).then(() => {
-            navigation.navigate('Login');
-            alert('Registered successfully, Please login!');
+            navigation.navigate('Login', {registered: true});
+            // alert('Registered successfully, Please login!');
           });
         } else {
-          alert(res?.msg);
+          // alert(res?.msg);
+          setAlertMsg(res?.msg);
+          setAlertModal(true);
         }
       })
       .catch(err => {
-        alert('Something went wrong!');
+        // alert('Something went wrong!');
+        setAlertMsg('Something went wrong!');
+        setAlertModal(true);
       })
       .finally(() => {
         setLoader(false);
@@ -69,6 +76,11 @@ const SignUp = ({navigation}) => {
       <MyStatusBar backgroundColor={WHITE} barStyle={'dark-content'} />
       <SafeAreaView style={appStyles.safeareacontainer}>
         <Loader visible={loader} />
+        <Alertmodal
+          title={alertMsg}
+          visible={alertModal}
+          onBackpress={setAlertModal}
+        />
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           style={{flex: 1}}>
@@ -88,11 +100,11 @@ const SignUp = ({navigation}) => {
               alignItems: 'center',
               paddingBottom: 20, // Adjust padding bottom to ensure space for scrolling
             }}>
-            <View style={signupStyles.imageContainer}>
+            <View style={loginStyles.imageContainer}>
               <Image
-                source={LOGO}
+                source={ZZWHITE}
                 resizeMode="contain"
-                style={signupStyles.image}
+                style={loginStyles.image}
               />
             </View>
             <View style={{...loginStyles.logincontainer, height: HEIGHT * 0.5}}>
@@ -147,7 +159,7 @@ const SignUp = ({navigation}) => {
                   alignItems: 'right',
                   width: '90%',
                 }}>
-                <Text
+                {/* <Text
                   style={{
                     textAlign: 'right',
                     color: '#787878',
@@ -155,19 +167,27 @@ const SignUp = ({navigation}) => {
                     fontSize: RFValue(14),
                   }}>
                   Forgot password?
-                </Text>
+                </Text> */}
               </View>
             </View>
             <CustomButton
               onPress={() => {
                 if (name == '' && email == '' && password == '') {
-                  alert('Please fill all the details to create account!');
+                  // alert('Please fill all the details to create account!');
+                  setAlertMsg('Please fill all the details to create account!');
+                  setAlertModal(true);
                 } else if (name == '') {
-                  alert('Please enter your name');
+                  // alert('Please enter your name');
+                  setAlertMsg('Please enter your name!');
+                  setAlertModal(true);
                 } else if (email == '') {
-                  alert('Please enter your email');
+                  // alert('Please enter your email');
+                  setAlertMsg('Please enter your email');
+                  setAlertModal(true);
                 } else if (password == '') {
-                  alert('Please enter your password');
+                  // alert('Please enter your password');
+                  setAlertMsg('Please enter your password');
+                  setAlertModal(true);
                 } else {
                   handleSignup();
                 }

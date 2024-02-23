@@ -17,7 +17,7 @@ import {HEIGHT, MyStatusBar} from '../../constants/config';
 import {appStyles} from '../../styles/AppStyles';
 import {Loader} from './../../components/Loader';
 import {loginStyles} from '../Login/LoginStyles';
-import {REGULAR} from '../../constants/fontfamily';
+import {MEDIUM, REGULAR} from '../../constants/fontfamily';
 import {claimStyles} from './ClaimStyles';
 import {CLAIM} from '../../constants/imagepath';
 import Header from '../../components/Header';
@@ -26,11 +26,14 @@ import {GETNETWORK, POSTNETWORK} from '../../utils/Network';
 import NetInfo from '@react-native-community/netinfo';
 import {NetworkInfo} from 'react-native-network-info';
 import {clearAll} from '../../utils/Storage';
+import {headerStyles} from '../../components/Header/HeaderStyles';
+import DeviceInfo from 'react-native-device-info';
 
 const Claim = ({navigation}) => {
   const [permissionStatus, setPermissionStatus] = useState(false);
   const [loader, setLoader] = useState(false);
   const [claimID, setClaimID] = useState('');
+  const [message, setMessage] = useState('');
   let userDetails = {
     ipaddress: '',
     latitude: '',
@@ -71,7 +74,6 @@ const Claim = ({navigation}) => {
             longitude: longitude.toString(),
             altitude: altitude.toString(),
           };
-          setLoader(false);
           fetchNetworkDetails();
         },
         error => {
@@ -84,18 +86,21 @@ const Claim = ({navigation}) => {
 
   const fetchNetworkDetails = async () => {
     try {
-      setLoader(true);
       const defaultGateway = await NetworkInfo.getGatewayIPAddress();
       const state = await NetInfo.fetch();
-
-      userDetails = {
-        ...userDetails,
-        ssid: state?.details?.ssid,
-        bssid: state?.details?.bssid,
-        frequency: state?.details?.frequency,
-        ipaddress: state?.details?.ipAddress,
-        defaultGateway: defaultGateway,
-      };
+      await DeviceInfo.getUniqueId().then(uniqueId => {
+        console.log(uniqueId);
+        userDetails = {
+          ...userDetails,
+          uniqueId: uniqueId,
+          ssid: state?.details?.ssid,
+          bssid: state?.details?.bssid,
+          frequency: state?.details?.frequency,
+          ipaddress: state?.details?.ipAddress,
+          defaultGateway: defaultGateway,
+        };
+      });
+      console.log(JSON.stringify(userDetails, null, 2));
       getClaimId();
     } catch (error) {
       console.error('Error fetching network details:', error);
@@ -109,7 +114,7 @@ const Claim = ({navigation}) => {
 
       if (res.code === 200) {
         setClaimID(res?.data?.alphanumeric_code);
-        postUserDetails();
+        postUserDetails(res?.data?.alphanumeric_code);
       } else {
         alert(res?.msg);
       }
@@ -120,29 +125,32 @@ const Claim = ({navigation}) => {
     }
   };
 
-  const postUserDetails = async () => {
+  const postUserDetails = async claimID => {
     console.log('User Details:', userDetails);
     const url = `${BASE_URL}user-data/`;
     const obj = {
       ztf_id: claimID,
       ...userDetails,
     };
-
-    try {
-      setLoader(true);
-      const res = await POSTNETWORK(url, obj, true);
-
-      if (res.code === 201) {
-        console.log('SUCCESS');
-      } else {
-        // Handle error case
-        console.log('Error:', res.msg);
-      }
-    } catch (error) {
-      console.error('Error:', error);
-    } finally {
-      setLoader(false);
-    }
+    console.log('--------------------->', JSON.stringify(obj, null, 2));
+    POSTNETWORK(url, obj, true)
+      .then(res => {
+        console.log('result', res);
+        if (res.code === 201) {
+          console.log('SUCCESS ++++++++++++++++');
+          if (res?.data?.messages) {
+            setMessage(res?.data?.messages);
+          }
+        } else {
+          alert(res?.msg);
+        }
+      })
+      .catch(err => {
+        alert('Something went wrong!');
+      })
+      .finally(() => {
+        setLoader(false);
+      });
   };
 
   const skipCallback = () => {
@@ -150,6 +158,7 @@ const Claim = ({navigation}) => {
     clearAll().then(() => {
       setTimeout(() => {
         navigation.navigate('Login');
+        // navigation.navigate('Admin');
         setLoader(false);
       }, 1000);
     });
@@ -157,12 +166,9 @@ const Claim = ({navigation}) => {
 
   const getInformation = async () => {
     try {
-      setLoader(true);
       await getGeolocationDetails();
     } catch (error) {
       console.error('Error fetching information:', error);
-    } finally {
-      setLoader(false);
     }
   };
 
@@ -181,6 +187,7 @@ const Claim = ({navigation}) => {
                 navigation.goBack();
               }}
               logoutShown={true}
+              adminShown={true}
               skipCallback={skipCallback}
             />
           </View>
@@ -234,6 +241,30 @@ const Claim = ({navigation}) => {
               borderColor={BRAND}
               width={'81%'}
             />
+            <View style={{height: HEIGHT * 0.05}} />
+            {message.length > 0 && (
+              <View
+                style={{
+                  width: '80%',
+                  alignItems: 'center',
+                  backgroundColor: '#EBF4FF',
+                  // borderTopRightRadius: 4,
+                  // borderBottomRightRadius: 4,
+                  borderLeftWidth: 5,
+                  borderRightWidth: 5,
+                  borderColor: '#6FA0FF',
+                  padding: 5,
+                }}>
+                <Text
+                  style={{
+                    color: '#6FA0FF',
+                    fontFamily: MEDIUM,
+                    fontSize: RFValue(15),
+                  }}>
+                  {message}
+                </Text>
+              </View>
+            )}
             <View style={{height: HEIGHT * 0.05}} />
           </ScrollView>
         </KeyboardAvoidingView>

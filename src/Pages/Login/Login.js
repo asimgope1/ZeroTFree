@@ -10,12 +10,12 @@ import {
   Alert,
   BackHandler,
 } from 'react-native';
-import React, {Fragment} from 'react';
+import React, {Fragment, useEffect} from 'react';
 import {BLACK, BRAND, WHITE} from '../../constants/color';
 import CustomButton from '../../components/CustomButton';
 import {loginStyles} from './LoginStyles';
 import {HEIGHT, MyStatusBar, WIDTH} from '../../constants/config';
-import {LOGO} from '../../constants/imagepath';
+import {LOGO, ZZWHITE} from '../../constants/imagepath';
 import {CustomTextInput} from '../../components/CustomTextInput';
 import {Loader} from '../../components/Loader';
 import {useState} from 'react';
@@ -26,11 +26,25 @@ import {useFocusEffect} from '@react-navigation/native';
 import {BASE_URL} from '../../constants/url';
 import {POSTNETWORK} from '../../utils/Network';
 import {storeObjByKey} from '../../utils/Storage';
+import Alertmodal from '../../components/Alertmodal/Alertmodal';
+import Exitmodal from '../../components/Exitmodal';
 
-const Login = ({navigation}) => {
+const Login = ({navigation, route}) => {
   const [loader, setLoader] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [alertMsg, setAlertMsg] = useState('');
+  const [alertModal, setAlertModal] = useState(false);
+  const [exitModal, setExitModal] = useState(false);
+
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('focus', () => {
+      console.log('focus');
+      setPassword('');
+      setEmail('');
+    });
+    return unsubscribe;
+  }, [navigation]);
 
   const handleLogin = () => {
     const url = `${BASE_URL}login/`;
@@ -45,11 +59,19 @@ const Login = ({navigation}) => {
         console.log('result', res);
         if (res.code === 200) {
           // async-storage-processing
-          storeObjByKey('loginResponse', res).then(() =>
-            navigation.navigate('Terms'),
-          );
+          storeObjByKey('loginResponse', res).then(() => {
+            // navigation.navigate('Terms'),
+            console.log(res);
+            if (res?.data?.is_admin) {
+              navigation.navigate('Admin');
+            } else {
+              navigation.navigate('Terms');
+            }
+          });
         } else {
-          alert(res?.msg);
+          // alert(res?.msg);
+          setAlertMsg(res?.msg);
+          setAlertModal(true);
         }
       })
       .catch(err => {
@@ -60,19 +82,26 @@ const Login = ({navigation}) => {
       });
   };
 
+  console.log(route?.params);
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('focus', () => {
+      if (route?.params?.registered) {
+        setAlertMsg('Registered successfully, Please login!');
+        setAlertModal(true);
+        // Clear route params
+        navigation.setParams({registered: false});
+      }
+    });
+
+    return unsubscribe;
+  }, [navigation, route]);
+
   useFocusEffect(() => {
     const backAction = () => {
-      Alert.alert('', 'Are you sure you want to Exit app?', [
-        {
-          text: 'Cancel',
-          onPress: () => null,
-          style: 'cancel',
-        },
-        {text: 'YES', onPress: () => BackHandler.exitApp()},
-      ]);
+      setExitModal(true);
+      setAlertMsg('Are you sure you want to Exit app?');
       return true;
     };
-
     const backHandler = BackHandler.addEventListener(
       'hardwareBackPress',
       backAction,
@@ -85,6 +114,16 @@ const Login = ({navigation}) => {
       <MyStatusBar backgroundColor={WHITE} barStyle={'dark-content'} />
       <SafeAreaView style={appStyles.safeareacontainer}>
         <Loader visible={loader} />
+        <Alertmodal
+          title={alertMsg}
+          visible={alertModal}
+          onBackpress={setAlertModal}
+        />
+        <Exitmodal
+          title={alertMsg}
+          visible={exitModal}
+          onBackpress={setExitModal}
+        />
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           style={{flex: 1}}>
@@ -99,7 +138,7 @@ const Login = ({navigation}) => {
             <View style={{height: HEIGHT * 0.1}} />
             <View style={loginStyles.imageContainer}>
               <Image
-                source={LOGO}
+                source={ZZWHITE}
                 resizeMode="contain"
                 style={loginStyles.image}
               />
@@ -146,26 +185,23 @@ const Login = ({navigation}) => {
                   ...loginStyles.credentialView,
                   alignItems: 'right',
                   width: '90%',
-                }}>
-                <Text
-                  style={{
-                    textAlign: 'right',
-                    color: '#787878',
-                    fontFamily: REGULAR,
-                    fontSize: RFValue(14),
-                  }}>
-                  Forgot password?
-                </Text>
-              </View>
+                }}></View>
             </View>
             <CustomButton
               onPress={() => {
                 if (email == '' && password == '') {
-                  alert('Please enter your email & password to login!');
+                  console.log('first');
+                  // alert('Please enter your email & password to login!');
+                  setAlertMsg('Please enter your email & password to login!');
+                  setAlertModal(true);
                 } else if (email == '') {
-                  alert('Please enter your email');
+                  // alert('Please enter your email');
+                  setAlertMsg('Please enter your email');
+                  setAlertModal(true);
                 } else if (password == '') {
-                  alert('Please enter your password');
+                  // alert('Please enter your password');
+                  setAlertMsg('Please enter your password');
+                  setAlertModal(true);
                 } else {
                   handleLogin();
                 }
@@ -198,7 +234,7 @@ const Login = ({navigation}) => {
                 </Text>
               </Text>
             </View>
-            <View style={{height: HEIGHT * 0.05}} />
+            <View style={{height: HEIGHT * 0.08}} />
           </ScrollView>
         </KeyboardAvoidingView>
       </SafeAreaView>

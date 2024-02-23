@@ -12,6 +12,7 @@ const Header = ({
   logoutShown = false,
   onIconPress,
   skipCallback,
+  adminShown,
 }) => {
   const navigation = useNavigation();
   return (

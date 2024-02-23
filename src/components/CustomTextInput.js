@@ -34,6 +34,10 @@ export const CustomTextInput = ({
   mandatory = false,
   hasExtraCallback = false,
   extraCallbackMethod,
+  height = 48,
+  textAlignVertical,
+  numberOfLines,
+  multiline,
 }) => {
   return (
     <View
@@ -68,7 +72,7 @@ export const CustomTextInput = ({
           style={{
             opacity: editable ? 1 : 0.5,
             borderRadius: 7,
-            height: 48,
+            height: height,
             flexDirection: 'row',
             borderColor: GRAY,
           }}>
@@ -96,6 +100,9 @@ export const CustomTextInput = ({
             autoFocus={autoFocus}
             secureTextEntry={secureTextEntry}
             editable={editable}
+            textAlignVertical={textAlignVertical}
+            numberOfLines={numberOfLines}
+            multiline={multiline}
             onChangeText={txt => {
               // if (!/[0-9,.*-@]/.test(txt.slice(-1))) {
               if (hasCallback) {
